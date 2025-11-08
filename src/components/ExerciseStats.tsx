@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Clock, Footprints, Calendar, TrendingUp } from "lucide-react";
-import { getExerciseStats, ExerciseStats as ExerciseStatsType } from "@/lib/api";
+import type { ExerciseStats as ExerciseStatsType } from "@/lib/api";
 
 interface ExerciseStatsProps {
     userId: string;
 }
 
+// 注意：此組件需要後端實作 /users/{user_id}/exercise-stats API
 const ExerciseStatsDisplay = ({ userId }: ExerciseStatsProps) => {
     const [stats, setStats] = useState<ExerciseStatsType | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -16,8 +17,20 @@ const ExerciseStatsDisplay = ({ userId }: ExerciseStatsProps) => {
 
         setIsLoading(true);
         try {
-            const data = await getExerciseStats(userId);
-            setStats(data);
+            // TODO: 後端需要實作 GET /users/{user_id}/exercise-stats API
+            // const data = await getExerciseStats(userId);
+            // setStats(data);
+
+            // 暫時使用空數據
+            setStats({
+                user_id: userId,
+                total_exercise_time: 0,
+                total_steps: 0,
+                today_exercise_time: 0,
+                today_steps: 0,
+                this_week_exercise_time: 0,
+                this_week_steps: 0,
+            });
         } catch (error) {
             console.error("Failed to load exercise stats:", error);
         } finally {

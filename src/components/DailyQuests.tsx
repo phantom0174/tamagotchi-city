@@ -1,74 +1,90 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Trophy, Clock, Footprints, MapPin } from "lucide-react";
-import { getUserDailyQuests, completeDailyQuestV2 } from "@/lib/api";
-import { UserDailyQuest } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2, Circle, Trophy } from "lucide-react";
+import { getUserDailyQuests, claimDailyQuest } from "@/lib/api";
+import { toast } from "sonner";
 
 interface DailyQuestsProps {
     userId: string;
     onQuestCompleted?: () => void;
 }
 
-const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
-    const [quests, setQuests] = useState<UserDailyQuest[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const { toast } = useToast();
+// Hard-coded 每日任務
+const DAILY_QUESTS = [
+    {
+        id: 1,
+        title: "每日登錄",
+        description: "登錄遊戲即可完成",
+        reward_strength: 5,
+        reward_stamina: 5,
+        reward_mood: 5,
+    },
+    {
+        id: 2,
+        title: "運動達人",
+        description: "累計運動 10 分鐘",
+        reward_strength: 10,
+        reward_stamina: 0,
+        reward_mood: 5,
+    },
+    {
+        id: 3,
+        title: "步行挑戰",
+        description: "累計步行 5000 步",
+        reward_strength: 10,
+        reward_stamina: 0,
+        reward_mood: 5,
+    },
+];
 
-    const loadQuests = useCallback(async () => {
+const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
+    const [completedQuests, setCompletedQuests] = useState<Set<number>>(new Set());
+    const [isLoading, setIsLoading] = useState(true);
+    const [claiming, setClaiming] = useState<number | null>(null);
+
+    const loadQuests = async () => {
         if (!userId) return;
 
         setIsLoading(true);
         try {
             const data = await getUserDailyQuests(userId);
-            setQuests(data);
+            // 將已完成的任務 ID 存入 Set
+            const completed = new Set(
+                data.quests.filter(q => q.completed).map(q => q.id)
+            );
+            setCompletedQuests(completed);
         } catch (error) {
             console.error("Failed to load daily quests:", error);
-            toast({
-                title: "錯誤",
-                description: "載入每日任務失敗",
-                variant: "destructive",
-            });
+            toast.error("載入每日任務失敗");
         } finally {
             setIsLoading(false);
         }
-    }, [userId, toast]);
+    };
 
     useEffect(() => {
         loadQuests();
-    }, [loadQuests]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     const handleClaimReward = async (questId: number) => {
+        setClaiming(questId);
         try {
-            await completeDailyQuestV2(userId, questId);
-            toast({
-                title: "任務完成！",
-                description: "已領取獎勵",
-            });
-            await loadQuests();
-            onQuestCompleted?.();
+            const result = await claimDailyQuest(userId, questId);
+            if (result.success) {
+                const rewards = result.rewards;
+                toast.success(`任務完成！獲得獎勵：💪 +${rewards?.strength || 0}, ⚡ +${rewards?.stamina || 0}, 😊 +${rewards?.mood || 0}`);
+                await loadQuests();
+                onQuestCompleted?.();
+            } else {
+                toast.error(result.message || "領取獎勵失敗");
+            }
         } catch (error) {
             console.error("Failed to claim reward:", error);
-            toast({
-                title: "錯誤",
-                description: "領取獎勵失敗",
-                variant: "destructive",
-            });
-        }
-    };
-
-    const getQuestIcon = (type: string) => {
-        switch (type) {
-            case "exercise":
-                return <Clock className="w-5 h-5" />;
-            case "steps":
-                return <Footprints className="w-5 h-5" />;
-            case "location":
-                return <MapPin className="w-5 h-5" />;
-            default:
-                return <Trophy className="w-5 h-5" />;
+            const errorMessage = error instanceof Error ? error.message : "領取獎勵失敗";
+            toast.error(errorMessage);
+        } finally {
+            setClaiming(null);
         }
     };
 
@@ -80,46 +96,28 @@ const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
         );
     }
 
-    if (quests.length === 0) {
-        return (
-            <Card className="p-4">
-                <div className="text-center text-muted-foreground">今日暫無任務</div>
-            </Card>
-        );
-    }
-
     return (
         <div className="space-y-3">
-            <h2 className="text-xl font-bold text-primary">📋 每日任務</h2>
-            {quests.map((userQuest) => {
-                const quest = userQuest.quest;
-                const progress = (userQuest.current_progress / quest.target_value) * 100;
-                const isCompleted = userQuest.is_completed;
-                const canClaim = progress >= 100 && !isCompleted;
+            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                <Trophy className="w-5 h-5" />
+                每日任務
+            </h2>
+            {DAILY_QUESTS.map((quest) => {
+                const isCompleted = completedQuests.has(quest.id);
 
                 return (
-                    <Card key={userQuest.id} className="p-4 space-y-3">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-3 flex-1">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                    {getQuestIcon(quest.quest_type)}
-                                </div>
+                    <Card key={quest.id} className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1">
+                                {isCompleted ? (
+                                    <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
+                                ) : (
+                                    <Circle className="w-6 h-6 text-gray-300 flex-shrink-0" />
+                                )}
+
                                 <div className="flex-1">
                                     <h3 className="font-semibold text-foreground">{quest.title}</h3>
                                     <p className="text-sm text-muted-foreground">{quest.description}</p>
-
-                                    {/* 進度條 */}
-                                    <div className="mt-2 space-y-1">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">
-                                                進度: {Math.min(userQuest.current_progress, quest.target_value)}/{quest.target_value}
-                                            </span>
-                                            <span className="font-medium text-primary">
-                                                {Math.min(Math.floor(progress), 100)}%
-                                            </span>
-                                        </div>
-                                        <Progress value={Math.min(progress, 100)} className="h-2" />
-                                    </div>
 
                                     {/* 獎勵 */}
                                     <div className="mt-2 flex gap-2 text-xs">
@@ -143,25 +141,16 @@ const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
                             </div>
 
                             {/* 領取按鈕 */}
-                            <div className="ml-2">
-                                {isCompleted ? (
-                                    <Button disabled variant="outline" size="sm">
-                                        已完成
-                                    </Button>
-                                ) : canClaim ? (
-                                    <Button
-                                        onClick={() => handleClaimReward(userQuest.id)}
-                                        size="sm"
-                                        className="bg-green-500 hover:bg-green-600"
-                                    >
-                                        領取
-                                    </Button>
-                                ) : (
-                                    <Button disabled variant="ghost" size="sm">
-                                        進行中
-                                    </Button>
-                                )}
-                            </div>
+                            {!isCompleted && (
+                                <Button
+                                    onClick={() => handleClaimReward(quest.id)}
+                                    size="sm"
+                                    disabled={claiming === quest.id}
+                                    className="bg-green-500 hover:bg-green-600"
+                                >
+                                    {claiming === quest.id ? "領取中..." : "領取"}
+                                </Button>
+                            )}
                         </div>
                     </Card>
                 );

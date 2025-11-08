@@ -108,30 +108,36 @@ export interface BreakthroughResult {
     message: string;
 }
 
-// 每日任務相關
-export interface DailyQuest {
+// 每日任務相關（匹配後端實際返回格式）
+export interface DailyQuestItem {
     id: number;
     title: string;
     description: string;
-    quest_type: string;  // 'exercise' | 'steps' | 'location'
-    target_value: number;
+    completed: boolean;
+    progress: number;  // 當前進度值
+    goal: number;  // 目標值
     reward_strength: number;
     reward_stamina: number;
     reward_mood: number;
-    created_at: string;
 }
 
-export interface UserDailyQuest {
-    id: number;
-    user_id: string;
-    quest_id: number;
-    date: string;
-    is_completed: boolean;
-    current_progress: number;
-    quest: DailyQuest;
+export interface DailyQuestStatus {
+    quests: DailyQuestItem[];
+    last_reset_date: string;
 }
 
-// 累計統計相關
+export interface ClaimQuestResult {
+    success: boolean;
+    message: string;
+    pet?: Pet;
+    rewards?: {
+        strength: number;
+        stamina: number;
+        mood: number;
+    };
+}
+
+// 累計統計相關（後端未實作，暫時保留介面）
 export interface ExerciseStats {
     user_id: string;
     total_exercise_time: number;  // 總運動時間（秒）
@@ -348,8 +354,8 @@ export function getStageName(stage: number): "egg" | "small" | "medium" | "large
 // 每日任務 API
 // ==================
 
-// 獲取用戶的每日任務列表
-export async function getUserDailyQuests(userId: string): Promise<UserDailyQuest[]> {
+// 獲取用戶每日任務狀態
+export async function getUserDailyQuests(userId: string): Promise<DailyQuestStatus> {
     const response = await fetch(`${API_BASE_URL}/users/${userId}/daily-quests`);
     if (!response.ok) {
         const error = await response.json();
@@ -358,37 +364,17 @@ export async function getUserDailyQuests(userId: string): Promise<UserDailyQuest
     return response.json();
 }
 
-// 更新每日任務進度
-export async function updateDailyQuestProgress(
-    userId: string,
-    questId: number,
-    progress: number
-): Promise<UserDailyQuest> {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/daily-quests/${questId}/progress`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ progress }),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to update quest progress");
-    }
-    return response.json();
-}
-
-// 完成每日任務並領取獎勵（新版 API）
-export async function completeDailyQuestV2(
+// 領取任務獎勵（後端會檢查任務是否完成）
+export async function claimDailyQuest(
     userId: string,
     questId: number
-): Promise<{ quest: UserDailyQuest; pet: Pet }> {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/daily-quests/${questId}/complete`, {
+): Promise<ClaimQuestResult> {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/daily-quests/${questId}/claim`, {
         method: "POST",
     });
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || "Failed to complete quest");
+        throw new Error(error.detail || "Failed to claim quest");
     }
     return response.json();
 }
@@ -396,36 +382,3 @@ export async function completeDailyQuestV2(
 // ==================
 // 運動統計 API
 // ==================
-
-// 獲取用戶的運動統計數據
-export async function getExerciseStats(userId: string): Promise<ExerciseStats> {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/exercise-stats`);
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to get exercise stats");
-    }
-    return response.json();
-}
-
-// 更新運動統計（運動結束時調用）
-export async function updateExerciseStats(
-    userId: string,
-    exerciseTime: number,
-    steps: number
-): Promise<ExerciseStats> {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/exercise-stats`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            exercise_time: exerciseTime,
-            steps: steps,
-        }),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to update exercise stats");
-    }
-    return response.json();
-}
