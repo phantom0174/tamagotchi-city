@@ -155,6 +155,17 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
 
   const { manualRain } = useManualRain();
 
+  // Generate fixed rain drops to prevent re-randomization on re-render
+  const [rainDrops] = useState(() => 
+    Array.from({ length: 25 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      duration: 0.8 + Math.random() * 0.6,
+      delay: Math.random() * 2,
+      height: 8 + Math.random() * 6,
+    }))
+  );
+
   // measure bubble height so we can position it exactly above the pet
   useEffect(() => {
     const measure = () => {
@@ -284,7 +295,7 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
     if (stage === 'egg') {
       setPosition({
         x: containerSize.width / 2 - petSize / 2,
-        y: containerSize.height / 2 - petSize / 2 + 60
+        y: groundLevel
       });
     } else {
       setPosition({
@@ -655,15 +666,15 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
               animation: pet-rain-fall linear infinite;
             }
           `}</style>
-          {Array.from({ length: 25 }).map((_, i) => (
+          {rainDrops.map((drop) => (
             <div
-              key={i}
+              key={drop.id}
               className="pet-rain-drop"
               style={{
-                left: `${Math.random() * 100}%`,
-                animationDuration: `${0.8 + Math.random() * 0.6}s`,
-                animationDelay: `${Math.random() * 2}s`,
-                height: `${8 + Math.random() * 6}px`,
+                left: `${drop.left}%`,
+                animationDuration: `${drop.duration}s`,
+                animationDelay: `${drop.delay}s`,
+                height: `${drop.height}px`,
               }}
             />
           ))}
