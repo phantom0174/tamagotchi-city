@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Play, Square } from "lucide-react";
@@ -212,7 +212,6 @@ const Exercise: React.FC = () => {
 
     // 計算獎勵（基本）
     const stamina = Math.floor(duration / 10);
-    const satiety = Math.floor(steps / 20);
     const mood = Math.floor(duration / 15);
 
     // 套用早雞加成（若在早上 6-10 點 start 時段）
@@ -231,19 +230,18 @@ const Exercise: React.FC = () => {
 
     // apply multiplier and compute final increments (取整數)
     const finalStamina = Math.floor(stamina * totalMultiplier);
-    const finalSatiety = Math.floor(satiety * totalMultiplier);
     const finalMood = Math.floor(mood * totalMultiplier);
 
     // 提交到後端API
     if (userId && duration > 0) {
       logExercise(userId, {
         exercise_type: activity || "unknown",
-        duration: duration,
+        duration_seconds: duration,
         volume: steps,
       })
         .then((result) => {
           toast.success(
-            `運動完成！偵測到活動: ${activity}。獲得：力量+${result.strength_gained}${finalStamina > 0 ? ` 體力+${finalStamina}` : ""}${finalSatiety > 0 ? ` 飽食度+${finalSatiety}` : ""}${finalMood > 0 ? ` 心情+${finalMood}` : ""}`
+            `運動完成！偵測到活動: ${activity}。獲得：力量+${result.strength_gained}${finalMood > 0 ? ` 心情+${finalMood}` : ""}`
           );
           if (result.breakthrough_required) {
             toast.info("恭喜達到突破等級！請前往旅遊完成突破任務");
@@ -257,7 +255,7 @@ const Exercise: React.FC = () => {
         });
     } else {
       toast.success(
-        `運動完成！偵測到活動: ${activity}。獲得：體力+${finalStamina} 飽食度+${finalSatiety} 心情+${finalMood}`
+        `運動完成！偵測到活動: ${activity}。獲得：心情+${finalMood}`
       );
     }
   };
