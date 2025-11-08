@@ -52,11 +52,6 @@ const Index = () => {
   // Rain effect - 使用全局的 manualRain 狀態
   const isRaining = manualRain;
 
-  // Debug: 檢查 rain 狀態
-  useEffect(() => {
-    console.log('Index.tsx - manualRain:', manualRain, 'isRaining:', isRaining);
-  }, [manualRain, isRaining]);
-
   // Perform daily check when component mounts
   useEffect(() => {
     const checkDaily = async () => {
@@ -158,8 +153,7 @@ const Index = () => {
             }
           });
           window.flutterObject.postMessage(message);
-          console.log("[早雞通知] 已發送早雞時段通知");
-          alreadyNotifiedRef.current = true; // <-- 只會被 set 一次
+          alreadyNotifiedRef.current = true;
         } catch (error) {
           console.error("[早雞通知] 發送失敗:", error);
         }

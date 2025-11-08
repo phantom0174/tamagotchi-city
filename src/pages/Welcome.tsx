@@ -19,7 +19,6 @@ const Welcome = () => {
 
     // Show that page started loading
     useEffect(() => {
-        console.log("Welcome page mounted");
         setPageLoaded(true);
 
         // Global error handler

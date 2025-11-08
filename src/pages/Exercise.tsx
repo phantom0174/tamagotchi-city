@@ -175,16 +175,12 @@ const Exercise: React.FC = () => {
 
       try {
         const stats = await getDailyStats(userId);
-        console.log('Exercise - Daily stats from API:', stats);
-
         setDailyMinutes(Math.floor(stats.daily_exercise_seconds / 60));
         setDailySteps(stats.daily_steps);
       } catch (error) {
         console.error('Failed to load daily stats:', error);
       }
-    };
-
-    loadDailyStats();
+    }; loadDailyStats();
   }, [userId]);
 
   const startExercise = () => {
@@ -335,12 +331,6 @@ const Exercise: React.FC = () => {
         steps: steps,
       })
         .then(async (result) => {
-          console.log("Exercise result:", result);
-          console.log("Exercise result pet data:", {
-            daily_exercise_seconds: result.pet?.daily_exercise_seconds,
-            daily_steps: result.pet?.daily_steps
-          });
-
           // 計算力量增長 = 運動後力量 - 運動前力量
           const strengthAfter = result.pet?.strength || 0;
           const strengthGained = strengthAfter - strengthBefore;
@@ -480,24 +470,6 @@ const Exercise: React.FC = () => {
     const windowSec = Math.max(0.001, (buf[buf.length - 1].t - buf[0].t) / 1000);
     const cadenceHz = peaksMag / windowSec;
 
-    if (DEBUG) {
-      // eslint-disable-next-line no-console
-      console.debug({
-        meanMag,
-        stdMag,
-        maxMag,
-        peaksMag,
-        peaksZ,
-        windowSec,
-        cadenceHz,
-        stepThreshold,
-        magPeakThreshold,
-        jumpAmpThreshold,
-        cadenceWalkingMin,
-        cadenceWalkingMax,
-      });
-    }
-
     // classification using hard-coded thresholds
     const isLikelyJump =
       maxMag > jumpAmpThreshold && peaksMag >= 2 && peaksZ / Math.max(1, peaksMag) >= verticalPeakRatioForJump;
@@ -597,10 +569,6 @@ const Exercise: React.FC = () => {
       if (delta > stepThreshold && now - lastStepTimeRef.current > minStepInterval) {
         setSteps((prev) => prev + 1);
         lastStepTimeRef.current = now;
-        if (DEBUG) {
-          // eslint-disable-next-line no-console
-          console.debug("step detected. delta:", delta, "linearMag:", linearMag);
-        }
       }
 
       // start periodic feature computation timer if not exist
@@ -628,7 +596,6 @@ const Exercise: React.FC = () => {
         window.removeEventListener("devicemotion", motionHandlerRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

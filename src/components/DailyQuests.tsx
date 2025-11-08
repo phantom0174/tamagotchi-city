@@ -49,7 +49,6 @@ const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
         setIsLoading(true);
         try {
             const data = await getUserDailyQuests(userId);
-            console.log('DailyQuests - API response:', data);
 
             // 後端返回格式: { quest_1_completed, quest_2_completed, quest_3_completed }
             const completed = new Set<number>();
@@ -57,7 +56,6 @@ const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
             if (data.quest_2_completed) completed.add(2);
             if (data.quest_3_completed) completed.add(3);
 
-            console.log('DailyQuests - Completed quest IDs:', Array.from(completed));
             setCompletedQuests(completed);
         } catch (error) {
             console.error("Failed to load daily quests:", error);
@@ -110,7 +108,6 @@ const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
             </h2>
             {DAILY_QUESTS.map((quest) => {
                 const isCompleted = completedQuests.has(quest.id);
-                console.log(`Quest ${quest.id} (${quest.title}):`, isCompleted ? 'COMPLETED' : 'NOT completed');
 
                 return (
                     <Card key={quest.id} className="p-4">
