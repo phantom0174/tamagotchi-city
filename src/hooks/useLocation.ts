@@ -72,8 +72,8 @@ export const useLocation = (): UseLocationReturn => {
 
                             console.log('Location data after parsing:', locationData);
 
-                            // Check if location was successful
-                            if (locationData && locationData.success) {
+                            // TownPass 返回的資料沒有 success 欄位，只要有 latitude 和 longitude 就是成功
+                            if (locationData && typeof locationData.latitude === 'number' && typeof locationData.longitude === 'number') {
                                 const result: LocationResponse = {
                                     success: true,
                                     latitude: locationData.latitude,
@@ -82,14 +82,14 @@ export const useLocation = (): UseLocationReturn => {
                                     altitude: locationData.altitude,
                                     heading: locationData.heading,
                                     speed: locationData.speed,
-                                    timestamp: locationData.timestamp,
+                                    timestamp: locationData.timestamp?.toString(),
                                 };
                                 console.log('位置資訊 (TownPass):', result);
                                 setLocation(result);
                                 setLoading(false);
                                 resolve(result);
                             } else {
-                                const errorMsg = locationData?.message || locationData?.error || '獲取位置失敗';
+                                const errorMsg = locationData?.message || locationData?.error || '獲取位置失敗：缺少經緯度資訊';
                                 console.error('TownPass 獲取位置失敗:', errorMsg, locationData);
                                 setError(errorMsg);
                                 setLoading(false);
