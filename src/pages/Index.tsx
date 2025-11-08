@@ -110,19 +110,39 @@ const Index = () => {
 
   // 打字機效果（入場期間顯示）
   useEffect(() => {
-    const title = "Pet Fitness";
-    let idx = 0;
-    setTypedText("");
-    const typeInterval = setInterval(() => {
-      setTypedText((prev) => prev + title[idx]);
-      idx += 1;
-      if (idx >= title.length) {
-        clearInterval(typeInterval);
-      }
-    }, 120);
+    // only run typing while the entrance overlay is visible
+    if (!showEntrance) {
+      setTypedText("");
+      return;
+    }
 
-    return () => clearInterval(typeInterval);
-  }, []);
+    const title = "Pet Fitness";
+    let timer: number | null = null;
+
+    const tick = () => {
+      setTypedText((prev) => {
+        const nextIndex = prev.length;
+        if (nextIndex >= title.length) return prev;
+        const ch = title.charAt(nextIndex);
+        const next = prev + ch;
+        if (next.length < title.length) {
+          timer = window.setTimeout(tick, 120);
+        }
+        return next;
+      });
+    };
+
+    // start fresh
+    setTypedText("");
+    timer = window.setTimeout(tick, 120);
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+  }, [showEntrance]);
 
 
   const handleNameEdit = async () => {

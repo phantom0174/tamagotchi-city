@@ -6,6 +6,17 @@ import PetMediumSvg from "@/assets/svg/pet-medium.svg";
 import PetLargeSvg from "@/assets/svg/pet-large.svg";
 import PetBuffSvg from "@/assets/svg/pet-buff.svg";
 
+// Dynamically load any "side" sprites the designer may add.
+// Uses Vite's import.meta.glob to avoid hardcoding file names.
+const _sideModules = import.meta.glob('/src/assets/svg/**/pet-*-side.*', { eager: true, as: 'url' }) as Record<string, string>;
+const SIDE_MAP: Record<string, string> = {};
+for (const p in _sideModules) {
+  const m = p.match(/pet-(small|medium|large|buff)-side/i);
+  if (m) {
+    SIDE_MAP[m[1].toLowerCase()] = _sideModules[p];
+  }
+}
+
 // Walking frame imports for small pet (8 frames)
 import PetSmallWalk1 from "@/assets/svg/pet-small-walk/pet-small-1.png.png";
 import PetSmallWalk2 from "@/assets/svg/pet-small-walk/pet-small-2.png.png";
@@ -121,6 +132,9 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
   const [flyFrame, setFlyFrame] = useState(0);
   const [direction, setDirection] = useState(1); // 1 for right, -1 for left
   const [walkCycle, setWalkCycle] = useState(0);
+  const [isTurning, setIsTurning] = useState(false);
+  const turnTimerRef = useRef<number | null>(null);
+  const prevDirectionRef = useRef(direction);
 
   // manual (click-triggered) message management
   const manualTimerRef = useRef<number | null>(null);
@@ -189,16 +203,50 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
     }
   }, [bubbleHeight, showMessage, position.y, containerSize.height, petSize]);
 
-  // compute bubble top so its bottom aligns with the pet's top
-  const computedBubbleTop = bubbleHeight > 0 ? Math.max(8, position.y - bubbleHeight - 6) : Math.max(8, position.y - petSize * 0.8);
+  // compute bubble position using the actual DOM position of the pet when possible
+  // This ensures the bubble visually follows the pet (even during CSS transitions)
+  let computedBubbleTop = Math.max(8, position.y - petSize * 0.8);
+  let computedBubbleLeft = position.x + petSize / 2;
 
-  // compute bubble left and clamp to container so it won't overflow horizontally
-  const centerX = position.x + petSize / 2;
-  const half = bubbleWidth > 0 ? bubbleWidth / 2 : 100;
-  const padding = 8; // keep some padding from edges
-  const minCenter = half + padding;
-  const maxCenter = Math.max(minCenter, containerSize.width - half - padding);
-  const computedBubbleLeft = Math.min(Math.max(centerX, minCenter), maxCenter);
+  try {
+    const petEl = petRef.current;
+    const containerEl = containerRef.current;
+    if (petEl && containerEl) {
+      const petRect = petEl.getBoundingClientRect();
+      const containerRect = containerEl.getBoundingClientRect();
+
+      // center relative to container
+      const centerX = petRect.left - containerRect.left + petRect.width / 2;
+      const topFromPet = petRect.top - containerRect.top - bubbleHeight - 6;
+
+      // clamp horizontally to container with padding
+      const half = bubbleWidth > 0 ? bubbleWidth / 2 : 100;
+      const padding = 8;
+      const minCenter = half + padding;
+      const maxCenter = Math.max(minCenter, containerSize.width - half - padding);
+
+      computedBubbleLeft = Math.min(Math.max(centerX, minCenter), maxCenter);
+      computedBubbleTop = bubbleHeight > 0 ? Math.max(8, topFromPet) : Math.max(8, position.y - petSize * 0.8);
+    } else {
+      // fallback to logical position if DOM not available
+      computedBubbleTop = bubbleHeight > 0 ? Math.max(8, position.y - bubbleHeight - 6) : Math.max(8, position.y - petSize * 0.8);
+      const centerX = position.x + petSize / 2;
+      const half = bubbleWidth > 0 ? bubbleWidth / 2 : 100;
+      const padding = 8; // keep some padding from edges
+      const minCenter = half + padding;
+      const maxCenter = Math.max(minCenter, containerSize.width - half - padding);
+      computedBubbleLeft = Math.min(Math.max(centerX, minCenter), maxCenter);
+    }
+  } catch (e) {
+    // if anything goes wrong, gracefully fallback to previous calculation
+    computedBubbleTop = bubbleHeight > 0 ? Math.max(8, position.y - bubbleHeight - 6) : Math.max(8, position.y - petSize * 0.8);
+    const centerX = position.x + petSize / 2;
+    const half = bubbleWidth > 0 ? bubbleWidth / 2 : 100;
+    const padding = 8; // keep some padding from edges
+    const minCenter = half + padding;
+    const maxCenter = Math.max(minCenter, containerSize.width - half - padding);
+    computedBubbleLeft = Math.min(Math.max(centerX, minCenter), maxCenter);
+  }
 
   // measure container and update on resize
   useEffect(() => {
@@ -320,11 +368,37 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
       });
       
       // Update walk cycle for animation (8 frames)
-      setWalkCycle(prev => (prev + 1) % 8);
+      setWalkCycle(prev => (isTurning ? prev : (prev + 1) % 8));
     }, 100);
 
     return () => clearInterval(walkInterval);
-  }, [direction, petSize, stage, containerSize.width, isJumping, isFlying]);
+  }, [direction, petSize, stage, containerSize.width, isJumping, isFlying, isTurning]);
+
+  // When direction changes, show a side sprite briefly before resuming walk
+  useEffect(() => {
+    if (prevDirectionRef.current !== direction) {
+      // only show side sprite for non-egg stages and when not jumping/flying
+      if (stage !== 'egg' && !isJumping && !isFlying) {
+        setIsTurning(true);
+        if (turnTimerRef.current) {
+          clearTimeout(turnTimerRef.current);
+        }
+        // show side sprite for 220ms (one frame)
+        turnTimerRef.current = window.setTimeout(() => {
+          setIsTurning(false);
+          turnTimerRef.current = null;
+        }, 220);
+      }
+    }
+    prevDirectionRef.current = direction;
+
+    return () => {
+      if (turnTimerRef.current) {
+        clearTimeout(turnTimerRef.current);
+        turnTimerRef.current = null;
+      }
+    };
+  }, [direction, stage, isJumping, isFlying]);
 
   // Jump function
   const performJump = () => {
@@ -343,9 +417,12 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
       
       if (progress < 1) {
         const height = jumpHeight * Math.sin(progress * Math.PI);
-        setPosition(prev => ({ ...prev, y: Math.max(groundLevel - height, startY) }));
+        // move the pet up by setting y = groundLevel - height (clamped to >= 0)
+        const newY = Math.max(0, groundLevel - height);
+        setPosition(prev => ({ ...prev, y: newY }));
         requestAnimationFrame(animateJump);
       } else {
+        // ensure we land exactly on the ground level
         setPosition(prev => ({ ...prev, y: groundLevel }));
         setIsJumping(false);
       }
@@ -408,6 +485,12 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
 
   const getPetIcon = () => {
     if (stage === "egg") return PetEggSvg;
+
+    // if we're currently turning, prefer the side sprite if available
+    if (isTurning) {
+      const side = SIDE_MAP[stage];
+      if (side) return side;
+    }
     
     // Use fly frames when flying (for small/medium/large)
     if (isFlying) {
@@ -563,7 +646,8 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
           top: position.y,
           filter: mood < 40 ? "grayscale(30%)" : "none",
           transform: `scaleX(${direction > 0 ? 1 : -1})`,
-          transition: isJumping ? "none" : "transform 0.2s"
+          // keep pet & bubble transitions consistent to avoid visual desync
+          transition: isJumping ? "none" : "left 120ms linear, top 120ms linear, transform 120ms linear"
         }}
       >
         <img 
