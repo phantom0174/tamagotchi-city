@@ -1,8 +1,6 @@
 // API Base URL
-// Use proxy in development, direct URL in production
-const API_BASE_URL = import.meta.env.MODE === 'development'
-    ? '/api'
-    : 'https://back-end-tasw.onrender.com';
+// Use proxy in development to avoid CORS issues, direct URL in production
+const API_BASE_URL = 'https://back-end-tasw.onrender.com';
 
 // ==================
 // Types (matching backend schemas)

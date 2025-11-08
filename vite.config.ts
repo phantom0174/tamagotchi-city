@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => ({
         target: 'https://back-end-tasw.onrender.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false,
       },
     },
   },
