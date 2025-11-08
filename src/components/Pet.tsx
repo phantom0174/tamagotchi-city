@@ -80,22 +80,37 @@ const Pet = ({ stage, mood }: PetProps) => {
       style={{ 
         width: containerSize.width, 
         height: containerSize.height,
-        background: 'linear-gradient(to bottom, var(--tp-primary-200) 0%, #90c956 50%, #7ab642 100%)'
+        background: 'linear-gradient(to bottom, #87CEEB 0%, #B4E2EA 30%, #C8E6F5 60%, #90EE90 75%, #7CB342 85%, #689F38 100%)'
       }}
     >
-      {/* Grass decorations */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 flex items-end justify-around">
-        {[...Array(15)].map((_, i) => (
-          <div 
-            key={i}
-            className="w-1 rounded-t-full animate-pulse"
-            style={{
-              height: `${Math.random() * 20 + 10}px`,
-              backgroundColor: 'var(--tp-primary-600)',
-              animationDelay: `${i * 0.2}s`
-            }}
-          />
-        ))}
+      {/* Sky decorations */}
+      {/* Sun */}
+      <div 
+        className="absolute top-4 right-6 w-8 h-8 rounded-full"
+        style={{ backgroundColor: '#FFD700' }}
+      />
+      
+      {/* Clouds */}
+      <div className="absolute top-6 left-4">
+        <div 
+          className="w-6 h-3 rounded-full opacity-80"
+          style={{ backgroundColor: 'white' }}
+        />
+        <div 
+          className="w-4 h-2 rounded-full opacity-80 -mt-1 ml-2"
+          style={{ backgroundColor: 'white' }}
+        />
+      </div>
+      
+      <div className="absolute top-8 right-16">
+        <div 
+          className="w-5 h-2 rounded-full opacity-70"
+          style={{ backgroundColor: 'white' }}
+        />
+        <div 
+          className="w-3 h-2 rounded-full opacity-70 -mt-1 ml-1"
+          style={{ backgroundColor: 'white' }}
+        />
       </div>
       
       <div

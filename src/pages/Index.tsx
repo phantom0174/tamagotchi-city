@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import Pet from "@/components/Pet";
 import StatBar from "@/components/StatBar";
 import ActionButton from "@/components/ActionButton";
-import { Dumbbell, Map, Edit2 } from "lucide-react";
+import { Dumbbell, Map } from "lucide-react";
+import EditIconSvg from "@/assets/svg/edit.svg";
+import StrengthIconSvg from "@/assets/svg/strength.svg";
+import HeartIconSvg from "@/assets/svg/heart.svg";
+import SmileIconSvg from "@/assets/svg/smile.svg";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import {
@@ -189,7 +193,7 @@ const Index = () => {
                     style={{ color: 'var(--tp-primary-700)' }}
                   >
                     {pet.name}
-                    <Edit2 className="w-4 h-4" />
+                    <img src={EditIconSvg} alt="edit" className="w-4 h-4" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
