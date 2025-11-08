@@ -639,6 +639,36 @@ const Pet = ({ stage, mood, message, startMessageTimer, strength, strengthMax, s
         backgroundRepeat: "no-repeat",
       }}
     >
+      {/* Rain animation - only visible when raining */}
+      {manualRain && (
+        <div className="absolute inset-0 pointer-events-none">
+          <style>{`
+            @keyframes pet-rain-fall {
+              0% { transform: translateY(-100%) rotate(10deg); opacity: 0.8; }
+              100% { transform: translateY(400%) rotate(10deg); opacity: 0; }
+            }
+            .pet-rain-drop {
+              position: absolute;
+              width: 2px;
+              background: linear-gradient(to bottom, rgba(173, 216, 230, 0.9), rgba(135, 206, 235, 0.5));
+              border-radius: 0 0 1px 1px;
+              animation: pet-rain-fall linear infinite;
+            }
+          `}</style>
+          {Array.from({ length: 25 }).map((_, i) => (
+            <div
+              key={i}
+              className="pet-rain-drop"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDuration: `${0.8 + Math.random() * 0.6}s`,
+                animationDelay: `${Math.random() * 2}s`,
+                height: `${8 + Math.random() * 6}px`,
+              }}
+            />
+          ))}
+        </div>
+      )}
       <div
         ref={petRef}
         className="absolute transition-all duration-200 flex items-center justify-center cursor-pointer"

@@ -219,7 +219,7 @@ const Index = () => {
           }
         `}</style>
         {/* Generate multiple rain drops */}
-        {Array.from({ length: 50 }).map((_, i) => (
+        {/* {Array.from({ length: 50 }).map((_, i) => (
           <div
             key={i}
             className="rain-drop"
@@ -230,7 +230,7 @@ const Index = () => {
               height: `${10 + Math.random() * 10}px`,
             }}
           />
-        ))}
+        ))} */}
       </div>
     );
   };
