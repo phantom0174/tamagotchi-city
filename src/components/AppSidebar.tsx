@@ -22,9 +22,9 @@ const menuItems = [
 ];
 
 const dailyMissions = [
-  { id: 1, task: "運動10分鐘", reward: "+10體力", completed: false },
-  { id: 2, task: "走路5000步", reward: "+5心情", completed: false },
-  { id: 3, task: "拜訪一個景點", reward: "+15成長", completed: false },
+  { id: 1, task: "每日登入", reward: "+5心情", completed: false },
+  { id: 2, task: "運動10分鐘", reward: "+10體力", completed: false },
+  { id: 3, task: "走路5000步", reward: "+15成長", completed: false },
 ];
 
 export function AppSidebar() {
