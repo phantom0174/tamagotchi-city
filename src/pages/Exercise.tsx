@@ -294,7 +294,7 @@ const Exercise: React.FC = () => {
     }
 
     try {
-      const newStrength = Math.min(pet.strength + 30, 100);
+      const newStrength = pet.strength + 30;
       await updateUserPet(userId, {
         strength: newStrength
       });
