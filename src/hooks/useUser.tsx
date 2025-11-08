@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { User, Pet, getUserPet } from "@/lib/api";
 
 interface UserContextType {
@@ -53,6 +53,51 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   };
+
+  // Polling: periodically refresh pet from backend to keep stats up-to-date.
+  // Enabled by default for option 1 behavior. Polling will pause when the
+  // document is hidden to save resources and resume (with an immediate
+  // refresh) when the page becomes visible again.
+  const pollingRef = useRef<number | null>(null);
+  const enablePolling = true; // set to false to disable automatic polling
+  const pollIntervalMs = 30000; // 30s
+
+  useEffect(() => {
+    if (!enablePolling || !userId) return;
+
+    const startPolling = () => {
+      // Immediately refresh once
+      refreshPet();
+      // start interval
+      pollingRef.current = window.setInterval(() => {
+        refreshPet();
+      }, pollIntervalMs) as unknown as number;
+    };
+
+    const stopPolling = () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        // visible again: refresh immediately and restart polling
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [enablePolling, userId, refreshPet]);
 
   useEffect(() => {
     if (userId) {
