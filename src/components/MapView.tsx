@@ -289,7 +289,9 @@ function QuestMarkers({
                   <p className="tp-caption mb-2" style={{
                     color: inRange ? 'var(--tp-success-600)' : 'var(--tp-grayscale-600)'
                   }}>
-                    距離: {Math.round(distance)}m {inRange && '✓ 在範圍內'}
+                    距離: {Math.round(distance)}m
+                    {quest.status === 'available' && (inRange ? ' ✓ 可接受任務 (1km內)' : ' (需在1km內)')}
+                    {quest.status === 'in-progress' && (inRange ? ' ✓ 可完成打卡 (100m內)' : ' (需在100m內)')}
                   </p>
 
                   {quest.status === 'available' ? (
@@ -331,7 +333,7 @@ function QuestMarkers({
             {isInView && (
               <Circle
                 center={[quest.lat, quest.lng]}
-                radius={quest.requiredDistance || 100}
+                radius={quest.status === 'available' ? 1000 : 100}
                 pathOptions={{
                   color: quest.status === 'completed' ? '#22c55e' :
                     quest.status === 'in-progress' ? '#f59e0b' : '#8b5cf6',
@@ -418,7 +420,11 @@ export const MapView = ({ quests, onAcceptQuest, onCompleteQuest, devMode, flyTo
       quest.lat,
       quest.lng
     );
-    return distance <= (quest.requiredDistance || 100); // 預設100米內
+
+    // available 狀態：1km 內可接受任務
+    // in-progress 狀態：100m 內可完成打卡
+    const requiredDistance = quest.status === 'available' ? 1000 : 100;
+    return distance <= requiredDistance;
   };
 
   const getBonusText = (bonus: { strength?: number; mood?: number }) => {

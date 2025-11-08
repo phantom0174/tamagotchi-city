@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Square } from "lucide-react";
+import { ArrowLeft, Play, Square, Code } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useUser } from "@/hooks/useUser";
 import { useLocation } from "@/hooks/useLocation";
-import { logExercise } from "@/lib/api";
+import { logExercise, updateUserPet } from "@/lib/api";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type Activity = "idle" | "walking" | "jumping" | "unknown";
 
@@ -22,6 +24,9 @@ const Exercise: React.FC = () => {
   const durationIntervalRef = useRef<number | null>(null);
 
   const [steps, setSteps] = useState(0);
+
+  // 開發者模式
+  const [devMode, setDevMode] = useState(false);
 
   // activity state
   const [activity, setActivity] = useState<Activity>("idle");
@@ -281,6 +286,26 @@ const Exercise: React.FC = () => {
     }
   };
 
+  // 開發者模式：快速增加力量
+  const handleDevModeBoost = async () => {
+    if (!userId || !pet) {
+      toast.error("請先登入");
+      return;
+    }
+
+    try {
+      const newStrength = Math.min(pet.strength + 30, 100);
+      await updateUserPet(userId, {
+        strength: newStrength
+      });
+      await refreshPet();
+      toast.success(`開發者模式：力量 +30！(${pet.strength} → ${newStrength})`);
+    } catch (error) {
+      console.error("Failed to boost strength:", error);
+      toast.error("更新失敗");
+    }
+  };
+
   // count peaks naive: a sample is a peak when v > neighbors and > threshold, and respect min interval
   const countPeaks = (
     seq: Array<{ t: number; v: number }>,
@@ -504,6 +529,37 @@ const Exercise: React.FC = () => {
 
         <Card className="p-6 space-y-4">
           <h1 className="text-2xl font-bold text-center text-primary">運動模式</h1>
+
+          {/* 開發者模式開關 */}
+          <Card className="p-3" style={{ backgroundColor: 'var(--tp-white)', borderColor: 'var(--tp-grayscale-300)' }}>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="dev-mode-exercise" className="flex items-center gap-2 tp-body-semibold" style={{ color: 'var(--tp-grayscale-700)' }}>
+                <Code className="w-5 h-5" />
+                開發者模式
+              </Label>
+              <Switch
+                id="dev-mode-exercise"
+                checked={devMode}
+                onCheckedChange={setDevMode}
+              />
+            </div>
+            {devMode && (
+              <div className="mt-3 space-y-2">
+                <p className="tp-caption" style={{ color: 'var(--tp-warning-600)' }}>
+                  已啟用開發者模式
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleDevModeBoost}
+                  disabled={!userId || !pet}
+                >
+                  +30 力量值
+                </Button>
+              </div>
+            )}
+          </Card>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-muted rounded-lg p-4 text-center">

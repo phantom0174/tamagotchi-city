@@ -108,6 +108,21 @@ export interface BreakthroughResult {
     message: string;
 }
 
+export interface TravelCheckin {
+    id: number;
+    user_id: number;
+    quest_id: string;
+    completed_at: string;
+    lat: number;
+    lng: number;
+}
+
+export interface TravelCheckinCreate {
+    quest_id: string;
+    lat: number;
+    lng: number;
+}
+
 // ==================
 // API Functions
 // ==================
@@ -244,6 +259,31 @@ export async function completeBreakthrough(userId: number): Promise<Breakthrough
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Failed to complete breakthrough");
+    }
+    return response.json();
+}
+
+// Travel Checkins (Location-based quests)
+export async function getUserTravelCheckins(userId: number): Promise<TravelCheckin[]> {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/travel/checkins`);
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to get travel checkins");
+    }
+    return response.json();
+}
+
+export async function createTravelCheckin(userId: number, checkin: TravelCheckinCreate): Promise<{ pet: Pet; checkin: TravelCheckin }> {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/travel/checkins`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(checkin),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to create travel checkin");
     }
     return response.json();
 }
