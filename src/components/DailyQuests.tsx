@@ -50,14 +50,14 @@ const DailyQuests = ({ userId, onQuestCompleted }: DailyQuestsProps) => {
         try {
             const data = await getUserDailyQuests(userId);
             console.log('DailyQuests - API response:', data);
-            
+
             // 檢查數據結構
             if (!data || !data.quests) {
                 console.error('Invalid API response:', data);
                 toast.error("任務資料格式錯誤");
                 return;
             }
-            
+
             // 將已完成的任務 ID 存入 Set
             const completed = new Set(
                 data.quests.filter((q: any) => q.completed).map((q: any) => q.id)
