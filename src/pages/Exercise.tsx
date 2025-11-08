@@ -17,7 +17,7 @@ const Exercise: React.FC = () => {
   const navigate = useNavigate();
   const { userId, pet, refreshPet } = useUser();
   const { getLocation } = useLocation();
-  const { manualRain, setManualRain } = useManualRain();
+  // const { manualRain, setManualRain } = useManualRain();
 
   const [isExercising, setIsExercising] = useState(false);
   const isExercisingRef = useRef(false);
