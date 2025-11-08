@@ -40,8 +40,11 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r" style={{ borderColor: 'var(--tp-grayscale-200)' }}>
-      <SidebarContent style={{ backgroundColor: 'var(--tp-white)' }}>
+    <Sidebar
+      className="border-r"
+      style={{ borderColor: 'var(--tp-grayscale-200)', ["--sidebar-width" as any]: "100vw" } as any}
+    >
+      <SidebarContent className="relative" style={{ backgroundColor: '#EDF8FA' }}>
         <SidebarGroup>
           <SidebarGroupLabel className="tp-h3-semibold" style={{ color: 'var(--tp-grayscale-700)' }}>
             選單
@@ -122,6 +125,7 @@ export function AppSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        
       </SidebarContent>
     </Sidebar>
   );
