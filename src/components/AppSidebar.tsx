@@ -1,4 +1,4 @@
-import { Home, BarChart3, ListTodo } from "lucide-react";
+import { Home, BarChart3 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -12,98 +12,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, CheckCircle2, Circle } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getUserDailyQuests, claimDailyQuest } from "@/lib/api";
-import { useUser } from "@/hooks/useUser";
-import { toast } from "sonner";
 
 const menuItems = [
   { title: "首頁", url: "/", icon: Home },
   { title: "Status", url: "/status", icon: BarChart3 },
 ];
 
-// Hard-coded 每日任務
-const DAILY_QUESTS = [
-  {
-    id: 1,
-    title: "每日登錄",
-    description: "登錄遊戲即可完成",
-    reward: "💪+5 ⚡+5 😊+5",
-    reward_strength: 5,
-    reward_stamina: 5,
-    reward_mood: 5,
-  },
-  {
-    id: 2,
-    title: "運動達人",
-    description: "累計運動 10 分鐘",
-    reward: "💪+10 😊+5",
-    reward_strength: 10,
-    reward_stamina: 0,
-    reward_mood: 5,
-  },
-  {
-    id: 3,
-    title: "步行挑戰",
-    description: "累計步行 5000 步",
-    reward: "💪+10 😊+5",
-    reward_strength: 10,
-    reward_stamina: 0,
-    reward_mood: 5,
-  },
-];
-
 export function AppSidebar() {
   const { open } = useSidebar();
   const location = useLocation();
-  const { userId, pet, refreshPet } = useUser();
-  const [completedQuests, setCompletedQuests] = useState<Set<number>>(new Set());
-  const [claiming, setClaiming] = useState<number | null>(null);
-  const [missionsOpen, setMissionsOpen] = useState(false);
-
-  useEffect(() => {
-    const loadQuests = async () => {
-      if (!userId) return;
-
-      try {
-        const data = await getUserDailyQuests(userId);
-        // 後端返回格式: { quest_1_completed, quest_2_completed, quest_3_completed }
-        const completed = new Set<number>();
-        if (data.quest_1_completed) completed.add(1);
-        if (data.quest_2_completed) completed.add(2);
-        if (data.quest_3_completed) completed.add(3);
-        setCompletedQuests(completed);
-      } catch (error) {
-        console.error("Failed to load daily quests:", error);
-      }
-    };
-
-    loadQuests();
-  }, [userId, pet?.daily_exercise_seconds, pet?.daily_steps]);
-
-  const handleClaimReward = async (questId: number) => {
-    if (claiming !== null) return;
-
-    setClaiming(questId);
-    try {
-      const result = await claimDailyQuest(userId, questId);
-      if (result.success) {
-        toast.success(`任務完成！💪 +${result.rewards.strength}, ⚡ +${result.rewards.stamina}, 😊 +${result.rewards.mood}`);
-        setCompletedQuests(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(questId);
-          return newSet;
-        });
-        await refreshPet();
-      }
-    } catch (error) {
-      toast.error("領取獎勵失敗");
-    } finally {
-      setClaiming(null);
-    }
-  };
 
   return (
     <Sidebar
@@ -140,70 +57,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarGroup>
-          <Collapsible open={missionsOpen} onOpenChange={setMissionsOpen}>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="tp-h3-semibold flex items-center justify-between w-full hover:bg-opacity-50" style={{ color: 'var(--tp-grayscale-700)' }}>
-                <div className="flex items-center gap-2">
-                  <ListTodo className="w-4 h-4" />
-                  {open && <span>每日任務</span>}
-                </div>
-                {open && <ChevronDown className={`w-4 h-4 transition-transform ${missionsOpen ? 'rotate-180' : ''}`} />}
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <div className="space-y-2 px-2">
-                  {DAILY_QUESTS.map((quest) => {
-                    const isCompleted = completedQuests.has(quest.id);
-                    return (
-                      <div
-                        key={quest.id}
-                        className="flex items-center gap-2 p-2 rounded"
-                        style={{ backgroundColor: isCompleted ? 'var(--tp-primary-50)' : 'transparent' }}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--tp-primary-500)' }} />
-                        ) : (
-                          <Circle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--tp-grayscale-300)' }} />
-                        )}
-                        {open && (
-                          <div className="flex-1">
-                            <div className="tp-body-regular" style={{
-                              color: isCompleted ? 'var(--tp-grayscale-500)' : 'var(--tp-grayscale-700)',
-                              textDecoration: isCompleted ? 'line-through' : 'none'
-                            }}>
-                              {quest.title}
-                            </div>
-                            <div className="tp-caption" style={{ color: 'var(--tp-secondary-600)' }}>
-                              {quest.reward}
-                            </div>
-                          </div>
-                        )}
-                        {open && !isCompleted && (
-                          <button
-                            onClick={() => handleClaimReward(quest.id)}
-                            disabled={claiming === quest.id}
-                            className="px-2 py-1 text-xs rounded"
-                            style={{
-                              backgroundColor: claiming === quest.id ? 'var(--tp-grayscale-200)' : 'var(--tp-primary-500)',
-                              color: 'var(--tp-white)',
-                              cursor: claiming === quest.id ? 'not-allowed' : 'pointer'
-                            }}
-                          >
-                            {claiming === quest.id ? '...' : '領取'}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-
       </SidebarContent>
     </Sidebar>
   );
