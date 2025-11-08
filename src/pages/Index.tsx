@@ -41,6 +41,11 @@ const Index = () => {
   // Rain effect - 使用全局的 manualRain 狀態
   const isRaining = manualRain;
 
+  // Debug: 檢查 rain 狀態
+  useEffect(() => {
+    console.log('Index.tsx - manualRain:', manualRain, 'isRaining:', isRaining);
+  }, [manualRain, isRaining]);
+
   // Perform daily check when component mounts
   useEffect(() => {
     const checkDaily = async () => {
