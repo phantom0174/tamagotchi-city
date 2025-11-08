@@ -266,20 +266,44 @@ const Exercise: React.FC = () => {
         duration_seconds: duration,
         volume: steps,
       })
-        .then((result) => {
+        .then(async (result) => {
           console.log("Exercise result:", result);
           // 計算力量增長 = 運動後力量 - 運動前力量
           const strengthAfter = result.pet?.strength || 0;
           const strengthGained = strengthAfter - strengthBefore;
 
-          toast.success(
-            `運動完成！偵測到活動: ${activity}。獲得：力量+${strengthGained}${finalMood > 0 ? ` 心情+${finalMood}` : ""}`
-          );
+          // 計算體力消耗：每增加1點力量就減少1點體力
+          if (strengthGained > 0 && result.pet) {
+            const staminaLoss = strengthGained;
+            const newStamina = Math.max(0, result.pet.stamina - staminaLoss);
+
+            // 更新寵物的體力值
+            try {
+              await updateUserPet(userId, {
+                stamina: newStamina
+              });
+
+              toast.success(
+                `運動完成！偵測到活動: ${activity}。獲得：力量+${strengthGained}${finalMood > 0 ? ` 心情+${finalMood}` : ""} 體力-${staminaLoss}`
+              );
+            } catch (error) {
+              console.error("Failed to update stamina:", error);
+              toast.success(
+                `運動完成！偵測到活動: ${activity}。獲得：力量+${strengthGained}${finalMood > 0 ? ` 心情+${finalMood}` : ""}`
+              );
+            }
+          } else {
+            toast.success(
+              `運動完成！偵測到活動: ${activity}。獲得：力量+${strengthGained}${finalMood > 0 ? ` 心情+${finalMood}` : ""}`
+            );
+          }
+
           if (result.breakthrough_required) {
             toast.info("恭喜達到突破等級！請前往旅遊完成突破任務");
           }
+
           // 刷新寵物數據
-          refreshPet();
+          await refreshPet();
         })
         .catch((error) => {
           console.error("Failed to log exercise:", error);
