@@ -124,34 +124,6 @@ const Index = () => {
     return () => clearInterval(typeInterval);
   }, []);
 
-  const getChickenMessage = () => {
-    if (!pet) return "咕咕！準備好一起運動了嗎？";
-
-    const { strength, stamina, mood } = pet;
-    const currentLevelStrength = strength % 120;
-
-    if (stamina <= 0) {
-      return "咕咕！今天運動量已經足夠了，休息也很重要喔！🌟";
-    }
-
-    if (mood > 80) {
-      return "咕咕！心情超好！繼續保持運動習慣喔！💪";
-    }
-
-    if (mood > 60) {
-      return "咕咕～感覺還不錯呢！";
-    }
-
-    if (currentLevelStrength < 60) {
-      return "咕咕...今天還沒達標呢，記得要運動至少10分鐘喔！";
-    }
-
-    if (mood <= 40) {
-      return "咕...好久沒運動了，我快要生鏽了...";
-    }
-
-    return "咕咕！準備好一起運動了嗎？";
-  };
 
   const handleNameEdit = async () => {
     if (editingName.trim() && userId) {
@@ -323,31 +295,7 @@ const Index = () => {
 
           <main className="flex-1 p-4 overflow-auto">
             <div className="max-w-md mx-auto space-y-4">
-              {/* Pet Display */}
-              <Card className="p-6 space-y-4" style={{ backgroundColor: 'var(--tp-white)', borderColor: 'var(--tp-primary-200)' }}>
-                <div className="flex justify-center">
-                  <Pet stage={petStage} mood={pet.mood} />
-                </div>
-
-                <div
-                  className="p-4 rounded-lg relative"
-                  style={{ backgroundColor: 'var(--tp-primary-100)' }}
-                >
-                  <div
-                    className="absolute -top-2 left-8 w-0 h-0"
-                    style={{
-                      borderLeft: '10px solid transparent',
-                      borderRight: '10px solid transparent',
-                      borderBottom: '10px solid var(--tp-primary-100)'
-                    }}
-                  />
-                  <p className="tp-body-regular" style={{ color: 'var(--tp-grayscale-800)' }}>
-                    {getChickenMessage()}
-                  </p>
-                </div>
-              </Card>
-
-              {/* Stats */}
+                            {/* Stats */}
               <Card className="p-6 space-y-4" style={{ backgroundColor: 'var(--tp-white)', borderColor: 'var(--tp-primary-200)' }}>
                 <h3 className="tp-h3-semibold" style={{ color: 'var(--tp-grayscale-800)' }}>能力值</h3>
                 <StatBar
@@ -369,6 +317,19 @@ const Index = () => {
                   icon="😊"
                 />
               </Card>
+
+              {/* Pet Display */}
+              <div className="flex justify-center">
+                <Pet
+                  stage={petStage}
+                  mood={pet.mood}
+                  strength={currentLevelStrength}
+                  strengthMax={120}
+                  stamina={pet.stamina}
+                  staminaMax={900}
+                  startMessageTimer={!showEntrance}
+                />
+              </div>
 
               {/* Actions */}
               <div className="grid grid-cols-2 gap-3">
