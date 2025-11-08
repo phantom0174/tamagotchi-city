@@ -5,6 +5,8 @@ import Pet from "@/components/Pet";
 import StatBar from "@/components/StatBar";
 import ActionButton from "@/components/ActionButton";
 import { Dumbbell, Map } from "lucide-react";
+import chickenSport from "@/assets/image/chicken_sport.png";
+import chickenTravel from "@/assets/image/chicken_travel.png";
 import EditIconSvg from "@/assets/svg/edit.svg";
 import StrengthIconSvg from "@/assets/svg/strength.svg";
 import HeartIconSvg from "@/assets/svg/heart.svg";
@@ -194,7 +196,7 @@ const Index = () => {
           <header 
             className="h-16 flex items-center px-4 border-b"
             style={{ 
-              backgroundColor: 'var(--tp-white)',
+              backgroundColor: '#EDF8FA',
               borderColor: 'var(--tp-primary-200)'
             }}
           >
@@ -245,9 +247,7 @@ const Index = () => {
                 </Popover>
               </div>
               
-              <span className="tp-body-regular" style={{ color: 'var(--tp-grayscale-600)' }}>
-                {getStageName(petStage)}
-              </span>
+              
               
               <div 
                 className="ml-auto px-3 py-1 rounded-full tp-body-semibold"
@@ -257,6 +257,9 @@ const Index = () => {
                 }}
               >
                 Lv.{stats.level}
+                <span className="tp-body-regular" style={{ color: 'var(--tp-grayscale-600)' }}>
+                {getStageName(petStage)}
+                </span>
               </div>
             </div>
           </header>
@@ -298,12 +301,12 @@ const Index = () => {
               {/* Actions */}
               <div className="grid grid-cols-2 gap-3">
                 <ActionButton
-                  icon={Dumbbell}
+                  icon={chickenSport}
                   label="運動"
                   onClick={() => navigate("/exercise")}
                 />
                 <ActionButton
-                  icon={Map}
+                  icon={chickenTravel}
                   label="旅遊"
                   onClick={() => navigate("/travel")}
                   variant="accent"

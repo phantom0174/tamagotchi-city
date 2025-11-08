@@ -1,24 +1,40 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 
 interface ActionButtonProps {
-  icon: LucideIcon;
+  icon: LucideIcon | React.ReactNode | string;
   label: string;
   onClick: () => void;
   variant?: "default" | "accent";
 }
 
-const ActionButton = ({ icon: Icon, label, onClick, variant = "default" }: ActionButtonProps) => {
+const ActionButton = ({ icon, label, onClick, variant = "default" }: ActionButtonProps) => {
+  const isElement = React.isValidElement(icon);
+  const isComponent = typeof icon === "function" || (typeof icon === "object" && !!(icon as any)?.render);
+  const isString = typeof icon === "string";
+
   return (
     <Button
       onClick={onClick}
-      className={`flex-1 h-16 flex flex-col items-center justify-center gap-1 ${
+      className={`flex-1 h-14 flex flex-row items-center justify-center gap-3 px-4 ${
         variant === "accent" ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""
       }`}
       variant={variant === "default" ? "default" : undefined}
     >
-      <Icon className="w-5 h-5" />
-      <span className="text-xs font-medium">{label}</span>
+      <div className="flex items-center justify-center w-10 h-10">
+        {isElement ? (
+          icon as React.ReactNode
+        ) : isComponent ? (
+          React.createElement(icon as React.ComponentType<any>, { className: "w-10 h-10" })
+        ) : isString ? (
+          <img src={icon as string} alt={label} className="w-10 h-10 object-contain" />
+        ) : (
+          // fallback: render as-is
+          icon as React.ReactNode
+        )}
+      </div>
+      <span className="text-sm font-medium">{label}</span>
     </Button>
   );
 };
